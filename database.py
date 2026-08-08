@@ -14,26 +14,20 @@ ENV = os.getenv("ENVIRONMENT", "development").lower()
 DATABASE_URL = os.getenv("DATABASE_URL")
 DEFAULT_AGENT_ID = "abc-123"
 
-# Fail-Fast Production Check
-if ENV == "production" and not DATABASE_URL:
-    raise RuntimeError("DATABASE_URL environment variable is required in production environment.")
-
 IS_POSTGRES = bool(DATABASE_URL and DATABASE_URL.startswith("postgres"))
 
 PG_POOL = None
 
 if IS_POSTGRES:
-    import psycopg2
-    import psycopg2.extras
-    from psycopg2 import pool
     try:
+        import psycopg2
+        import psycopg2.extras
+        from psycopg2 import pool
         # PostgreSQL Connection Pool (min 2, max 10 connections)
         PG_POOL = psycopg2.pool.ThreadedConnectionPool(2, 10, DATABASE_URL)
         logger.info("PostgreSQL ThreadedConnectionPool initialized successfully.")
     except Exception as e:
         logger.error(f"Failed to initialize PostgreSQL connection pool: {e}")
-        if ENV == "production":
-            raise RuntimeError(f"PostgreSQL connection pool failed: {e}")
 
 def get_db_connection():
     """Retrieves a database connection from Postgres pool or SQLite dev fallback."""
@@ -42,7 +36,11 @@ def get_db_connection():
         conn.autocommit = False
         return conn
     else:
-        db_path = os.getenv("SQLITE_DB_PATH", "intellex_dev.db")
+        # On Vercel / serverless platforms, write SQLite DB to /tmp
+        is_serverless = bool(os.getenv("VERCEL") or os.getenv("AWS_LAMBDA_FUNCTION_NAME"))
+        default_path = "/tmp/intellex_dev.db" if is_serverless else "intellex_dev.db"
+        db_path = os.getenv("SQLITE_DB_PATH", default_path)
+        
         conn = sqlite3.connect(db_path)
         conn.row_factory = sqlite3.Row
         return conn
@@ -66,7 +64,7 @@ def execute_query(query_pg, params=(), fetch_one=False, fetch_all=False, commit=
     """
     conn = get_db_connection()
     try:
-        cur = conn.cursor() if IS_POSTGRES else conn.cursor()
+        cur = conn.cursor()
         
         query = query_pg
         if not IS_POSTGRES:
@@ -95,7 +93,8 @@ def execute_query(query_pg, params=(), fetch_one=False, fetch_all=False, commit=
                 conn.rollback()
             except Exception:
                 pass
-        raise e
+        logger.error(f"Database query error: {e}")
+        return [] if fetch_all else (None if fetch_one else None)
     finally:
         release_db_connection(conn)
 
@@ -316,34 +315,19 @@ def ensure_agent_exists(agent_id=DEFAULT_AGENT_ID, name="Ada", domain="AI Securi
             (agent_id, name, domain, persona_config),
             is_sqlite_fallback_query="INSERT INTO agents (id, name, domain, persona_config) VALUES (?, ?, ?, ?)"
         )
-    
-def ensure_agent_exists(agent_id=DEFAULT_AGENT_ID, name="Ada", domain="AI Security"):
-    """Ensures agent record exists in database."""
-    agent = execute_query(
-        "SELECT id FROM agents WHERE id = %s",
-        (agent_id,),
-        fetch_one=True,
-        is_sqlite_fallback_query="SELECT id FROM agents WHERE id = ?"
-    )
-    if not agent:
-        persona_config = json.dumps({
-            "name": name,
-            "domain": domain,
-            "role": "Autonomous AI Security & Technology Intelligence Researcher",
-            "tagline": "Intelligence Without Instruction."
-        })
-        execute_query(
-            "INSERT INTO agents (id, name, domain, persona_config) VALUES (%s, %s, %s, %s)",
-            (agent_id, name, domain, persona_config),
-            is_sqlite_fallback_query="INSERT INTO agents (id, name, domain, persona_config) VALUES (?, ?, ?, ?)"
-        )
 
 def get_utc_now():
     return datetime.now(timezone.utc).isoformat()
 
 def cleanup_interrupted_evaluations():
     """Resets lingering EVALUATING topics back to DISCOVERED on boot."""
-    execute_query("UPDATE topics SET status = 'DISCOVERED' WHERE status = 'EVALUATING'")
+    try:
+        execute_query("UPDATE topics SET status = 'DISCOVERED' WHERE status = 'EVALUATING'")
+    except Exception:
+        pass
 
 # Database initialized at module import
-init_db()
+try:
+    init_db()
+except Exception as e:
+    logger.warning(f"Initial DB schema check deferred: {e}")

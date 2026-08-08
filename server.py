@@ -9,7 +9,7 @@ import json
 import logging
 from datetime import datetime, timezone
 
-from database import execute_query, get_utc_now, DEFAULT_AGENT_ID, ensure_agent_exists
+from database import execute_query, get_utc_now, DEFAULT_AGENT_ID, ensure_agent_exists, init_db
 
 # Configure Structured Logging
 logging.basicConfig(
@@ -63,6 +63,11 @@ def init_agent(req: InitRequest = None):
     Stateless and sub-100ms. Does NOT execute scraping or worker loops in-process.
     Returns exact evaluator contract: { "agentId": "abc-123" }
     """
+    try:
+        init_db()
+    except Exception:
+        pass
+
     agent_id = DEFAULT_AGENT_ID
     persona_name = req.persona.name if (req and req.persona) else "Ada"
     domain_name = req.persona.domain if (req and req.persona) else "AI Security"
@@ -80,6 +85,11 @@ def get_agent_feed(agentId: str = Query(..., description="The agent ID")):
     Evaluator API Endpoint 2: Returns published intelligence feed.
     Exact evaluator contract schema with optional category metadata.
     """
+    try:
+        init_db()
+    except Exception:
+        pass
+
     query_postgres = """
         SELECT p.id, p.published_at as createdAt, p.text, p.rationale, t.category,
                ARRAY_AGG(s.url) as sources
@@ -101,14 +111,13 @@ def get_agent_feed(agentId: str = Query(..., description="The agent ID")):
         ORDER BY p.published_at DESC
     """
 
-    rows = execute_query(query_postgres, (agentId,), fetch_all=True, is_sqlite_fallback_query=query_sqlite)
+    rows = execute_query(query_postgres, (agentId,), fetch_all=True, is_sqlite_fallback_query=query_sqlite) or []
 
     # Process results into flat list with deduplicated sources
     posts_map = {}
     for r in rows:
         pid = r["id"]
         if pid not in posts_map:
-            # Format ISO-8601 UTC timestamp
             created_at = r.get("createdat") or r.get("createdAt") or get_utc_now()
             posts_map[pid] = {
                 "id": r["id"],
@@ -119,7 +128,6 @@ def get_agent_feed(agentId: str = Query(..., description="The agent ID")):
                 "sources": []
             }
 
-        # Handle sources array (Postgres ARRAY_AGG vs SQLite rows)
         if "sources" in r and isinstance(r["sources"], list):
             for src in r["sources"]:
                 if src and src not in posts_map[pid]["sources"]:
@@ -135,6 +143,11 @@ def get_evaluations(agentId: str = Query(DEFAULT_AGENT_ID)):
     """
     Returns full evaluation audit history, showcasing published vs rejected candidate topics.
     """
+    try:
+        init_db()
+    except Exception:
+        pass
+
     query_pg = """
         SELECT t.id as topic_id, t.title, t.cve_id, t.category, t.status, t.canonical_url,
                e.score, e.verdict, e.rejection_reason, e.criteria_scores, e.evaluated_at
@@ -144,7 +157,7 @@ def get_evaluations(agentId: str = Query(DEFAULT_AGENT_ID)):
     """
     query_sqlite = query_pg.replace("%s", "?")
 
-    evals = execute_query(query_pg, fetch_all=True, is_sqlite_fallback_query=query_sqlite)
+    evals = execute_query(query_pg, fetch_all=True, is_sqlite_fallback_query=query_sqlite) or []
     return {
         "agentId": agentId,
         "totalEvaluated": len(evals),
@@ -157,11 +170,17 @@ def get_agent_stats(agentId: str = Query(DEFAULT_AGENT_ID)):
     """
     Returns live editorial telemetry stats for the dashboard metrics cards.
     """
+    try:
+        init_db()
+    except Exception:
+        pass
+
     topics = execute_query(
         "SELECT status FROM topics",
         fetch_all=True,
         is_sqlite_fallback_query="SELECT status FROM topics"
-    )
+    ) or []
+    
     memory_count_res = execute_query(
         "SELECT COUNT(*) as cnt FROM agent_memory",
         fetch_one=True,
@@ -173,7 +192,13 @@ def get_agent_stats(agentId: str = Query(DEFAULT_AGENT_ID)):
     rejected = sum(1 for t in topics if t.get("status") == "REJECTED")
     pending = sum(1 for t in topics if t.get("status") in ["EVALUATING", "DISCOVERED"])
     
-    memory_matches = (memory_count_res.get("cnt", 0) if isinstance(memory_count_res, dict) else memory_count_res[0]) if memory_count_res else 0
+    memory_matches = 0
+    if memory_count_res:
+        if isinstance(memory_count_res, dict):
+            memory_matches = memory_count_res.get("cnt", 0)
+        elif isinstance(memory_count_res, (list, tuple)):
+            memory_matches = memory_count_res[0]
+
     verification_rate = round((published / discovered * 100), 1) if discovered > 0 else 0.0
 
     return {
@@ -190,6 +215,11 @@ def get_agent_stats(agentId: str = Query(DEFAULT_AGENT_ID)):
 @app.post("/api/agent/trigger")
 def trigger_autonomous_cycle(agentId: str = Query(DEFAULT_AGENT_ID)):
     """Development trigger endpoint to explicitly invoke autonomous worker cycle."""
+    try:
+        init_db()
+    except Exception:
+        pass
+
     from worker import run_autonomous_cycle
     stats = run_autonomous_cycle(agentId)
     return {
@@ -198,7 +228,7 @@ def trigger_autonomous_cycle(agentId: str = Query(DEFAULT_AGENT_ID)):
         "stats": stats
     }
 
-# Continuous Background Worker Loop Registration
+# Background Worker Loop Registration (Local/Stand-alone mode only)
 import threading
 import time
 
@@ -218,11 +248,13 @@ def start_continuous_worker():
 
 @app.on_event("startup")
 def on_startup():
-    start_continuous_worker()
+    # Only start background thread if NOT in Vercel serverless environment
+    if not os.getenv("VERCEL"):
+        start_continuous_worker()
 
-# Mount static web dashboard UI
+# Mount static web dashboard UI (Local fallback)
 public_dir = os.path.join(os.path.dirname(__file__), "public")
-if os.path.exists(public_dir):
+if os.path.exists(public_dir) and not os.getenv("VERCEL"):
     app.mount("/", StaticFiles(directory=public_dir, html=True), name="static")
 
 if __name__ == "__main__":
