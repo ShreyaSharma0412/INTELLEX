@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: intellex
+      POSTGRES_USER: intellex
+      POSTGRES_PASSWORD: secretpassword
+    ports:
+      - "5432:5432"
+
+  api:
+    build: .
+    command: python3 server.py
+    ports:
+      - "3000:3000"
+    environment:
+      ENVIRONMENT: production
+      DATABASE_URL: postgresql://intellex:secretpassword@postgres:5432/intellex
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+    depends_on:
+      - postgres
+
+  worker:
+    build: .
+    command: python3 worker.py
+    environment:
+      ENVIRONMENT: production
+      DATABASE_URL: postgresql://intellex:secretpassword@postgres:5432/intellex
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+    depends_on:
+      - postgres
