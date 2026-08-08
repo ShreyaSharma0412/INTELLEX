@@ -94,14 +94,22 @@ export default function Home() {
       if (feedRes.ok) {
         const feedData = await feedRes.json();
         if (feedData.posts && feedData.posts.length > 0) {
-          setPosts(feedData.posts);
+          setPosts((prev) => {
+            const existingIds = new Set(prev.map((p) => p.id));
+            const newPosts = feedData.posts.filter((p: PostItem) => !existingIds.has(p.id));
+            return newPosts.length > 0 ? [...newPosts, ...prev] : prev;
+          });
         }
       }
 
       if (evalRes.ok) {
         const evalData = await evalRes.json();
         if (evalData.evaluations && evalData.evaluations.length > 0) {
-          setEvaluations(evalData.evaluations);
+          setEvaluations((prev) => {
+            const existingIds = new Set(prev.map((e) => e.topic_id));
+            const newEvals = evalData.evaluations.filter((e: EvaluationItem) => !existingIds.has(e.topic_id));
+            return newEvals.length > 0 ? [...newEvals, ...prev] : prev;
+          });
         }
       }
     } catch (err) {
@@ -113,7 +121,7 @@ export default function Home() {
     fetchAgentData();
     const interval = setInterval(fetchAgentData, 6000);
 
-    // Continuous Live Autonomous Telemetry Stream Generator
+    // Non-stop Continuous Live Autonomous Telemetry Stream Generator
     let count = 0;
     const telemetryTimer = setInterval(() => {
       count++;
@@ -173,7 +181,7 @@ export default function Home() {
         };
         setEvaluations((prev) => [rejectEval, ...prev]);
       }
-    }, 4500);
+    }, 3800);
 
     return () => {
       clearInterval(interval);
