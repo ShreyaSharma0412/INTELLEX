@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Radio, Terminal, Sparkles } from 'lucide-react';
+import { Radio, Terminal } from 'lucide-react';
 
 interface LogItem {
   id: string;
@@ -11,12 +11,18 @@ interface LogItem {
 }
 
 const CYCLE_STEPS: Array<{ type: LogItem['type']; message: string }> = [
-  { type: 'SCAN', message: 'Scanning AI & security news feeds (CISA KEV, NIST NVD, arXiv, GHSA)...' },
+  { type: 'SCAN', message: 'Scanning live primary feeds (CISA KEV, NIST NVD 2.0, arXiv cs.CR, GHSA)...' },
   { type: 'EVALUATE', message: 'Evaluating relevance & 4-pillar technical significance score...' },
   { type: 'CROSS-CHECK', message: 'Cross-checking sources & anti-hallucination evidence provenance...' },
-  { type: 'REJECT', message: 'Rejecting routine topic: "Generic Minor Wrapper Documentation Patch" (Score 0.58 < 0.78)' },
-  { type: 'PUBLISH', message: 'Publishing verified report: "[AI & Security Research] Adversarial Prompt Injection Advisory"' },
+  { type: 'REJECT', message: 'Rejecting routine topic: "Generic Minor Formatting Documentation Patch" (Score 0.35 < 0.78)' },
+  { type: 'PUBLISH', message: 'Publishing verified dispatch: "[Vulnerability Intelligence] CVE-2026-21840 Heap Overflow"' },
   { type: 'MEMORY', message: 'Updating agent memory: Persisted incident entity fingerprint in database.' },
+  { type: 'SCAN', message: 'Ingesting Hugging Face daily AI security research paper feeds...' },
+  { type: 'EVALUATE', message: 'Calculating multi-pillar confidence metrics (Significance: 94%, Novelty: 90%)...' },
+  { type: 'PUBLISH', message: 'Publishing verified dispatch: "[AI & Security Research] Adversarial Prompt Injection"' },
+  { type: 'REJECT', message: 'Rejecting low-confidence claim: "Unverified Zero-Day Rumor on Social Media" (Score 0.42 < 0.78)' },
+  { type: 'MEMORY', message: 'Persisting GHSA-77fp-v3qx-768m security advisory into agent memory graph...' },
+  { type: 'CROSS-CHECK', message: 'Validating HTTP canonical provenance & claim snippet depth > 40 chars...' },
 ];
 
 export const ThoughtStream: React.FC = () => {
@@ -24,27 +30,27 @@ export const ThoughtStream: React.FC = () => {
 
   useEffect(() => {
     const now = Date.now();
-    const initial: LogItem[] = CYCLE_STEPS.map((step, idx) => ({
-      id: String(idx + 1),
-      time: new Date(now - (CYCLE_STEPS.length - idx) * 3000).toISOString().substring(11, 19) + ' UTC',
+    const initial: LogItem[] = CYCLE_STEPS.slice(0, 6).map((step, idx) => ({
+      id: `init-${idx + 1}`,
+      time: new Date(now - (6 - idx) * 2500).toISOString().substring(11, 19) + ' UTC',
       type: step.type,
       message: step.message,
     }));
     setLogs(initial);
 
-    let index = 0;
+    let stepIndex = 0;
     const interval = setInterval(() => {
-      const step = CYCLE_STEPS[index % CYCLE_STEPS.length];
+      const step = CYCLE_STEPS[stepIndex % CYCLE_STEPS.length];
       const newLog: LogItem = {
-        id: String(Date.now()),
+        id: `stream-${Date.now()}-${Math.random()}`,
         time: new Date().toISOString().substring(11, 19) + ' UTC',
         type: step.type,
         message: step.message,
       };
 
       setLogs((prev) => [newLog, ...prev.slice(0, 5)]);
-      index++;
-    }, 3500);
+      stepIndex++;
+    }, 2800);
 
     return () => clearInterval(interval);
   }, []);
