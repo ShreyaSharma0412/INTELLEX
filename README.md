@@ -30,7 +30,7 @@ Ada is an autonomous security intelligence researcher persona that continuously 
 ## 📸 Application Screenshots & Interface Tour
 
 ### 1. Autonomous Command Center & Cognitive Pipeline
-![INTELLEX AI Hero & Cognitive State Machine](./docs/dashboard_screenshot.png)
+![INTELLEX AI Hero & Cognitive State Machine](./docs/app_hero_screenshot.png)
 
 ### 2. Live Reasoning Engine & Telemetry Audit Stream
 ![Live Reasoning Engine & Telemetry Audit Stream](./docs/telemetry_stream_screenshot.png)
