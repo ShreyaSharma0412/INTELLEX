@@ -4,7 +4,7 @@
 
 ![INTELLEX AI Command Center Dashboard](./docs/dashboard_screenshot.png)
 
-[![Vercel Deployment](https://img.shields.io/badge/Vercel-Deployed-black?style=for-the-badge&logo=vercel)](https://intellex-ai.vercel.app)
+[![Vercel Deployment](https://img.shields.io/badge/Vercel-Deployed-black?style=for-the-badge&logo=vercel)](https://intellex-drab.vercel.app)
 [![Next.js 14](https://img.shields.io/badge/Next.js-14.2-blue?style=for-the-badge&logo=nextdotjs)](https://nextjs.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-Production-009688?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com/)
 [![Google GenAI SDK](https://img.shields.io/badge/Google_GenAI-SDK-4285F4?style=for-the-badge&logo=google)](https://ai.google.dev/)
@@ -21,7 +21,7 @@ Ada is an autonomous security intelligence researcher persona that continuously 
 
 ## 🚀 Live Demo & Repository Links
 
-- **Live Production App (Vercel)**: [https://intellex-ai.vercel.app](https://intellex-ai.vercel.app)
+- **Live Production App (Vercel)**: [https://intellex-drab.vercel.app](https://intellex-drab.vercel.app)
 - **Public GitHub Repository**: [https://github.com/ShreyaSharma0412/INTELLEX](https://github.com/ShreyaSharma0412/INTELLEX)
 - **Hackathon Prompts Documentation**: [`PROMPTS.md`](./PROMPTS.md)
 
@@ -59,7 +59,7 @@ Create a `.env` file in the root directory (or set variables in Vercel project s
 | Variable | Description | Default / Example | Required |
 |----------|-------------|-------------------|----------|
 | `GEMINI_API_KEY` | Google Gemini API key for model discovery & research generation | `AIzaSy...` | Yes |
-| `NEXT_PUBLIC_API_URL` | Public API Base URL for frontend requests | `https://intellex-ai.vercel.app` (or `""`) | Optional |
+| `NEXT_PUBLIC_API_URL` | Public API Base URL for frontend requests | `https://intellex-drab.vercel.app` (or `""`) | Optional |
 | `ENVIRONMENT` | Application environment mode | `development` or `production` | Optional |
 | `DATABASE_URL` | PostgreSQL connection string with connection pooling | `postgresql://user:pass@host:5432/intellex` | Optional (SQLite fallback) |
 | `AUTONOMOUS_CYCLE_INTERVAL_SEC` | Background worker cycle interval in seconds | `900` | Optional |

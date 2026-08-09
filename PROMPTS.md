@@ -3,7 +3,7 @@
 > **Hackathon Submission Verification Document**  
 > **Project:** INTELLEX AI (Ada — Autonomous AI Security & Technology Intelligence Researcher)  
 > **Problem Statement #3:** Autonomous AI Researcher Persona (*"Intelligence Without Instruction"*)  
-> **Live App**: [https://intellex-ai.vercel.app](https://intellex-ai.vercel.app)  
+> **Live App**: [https://intellex-drab.vercel.app](https://intellex-drab.vercel.app)  
 > **GitHub Repo**: [https://github.com/ShreyaSharma0412/INTELLEX](https://github.com/ShreyaSharma0412/INTELLEX)  
 
 ---
@@ -262,6 +262,6 @@ PRIORITY FINGERPRINT FORMULA:
 | Requirement | Implementation Status | Verification Location |
 |-------------|-----------------------|-----------------------|
 | **Public GitHub Repo** | Verified & Public | [ShreyaSharma0412/INTELLEX](https://github.com/ShreyaSharma0412/INTELLEX) |
-| **Live Deployed URL** | Verified Active | [https://intellex-ai.vercel.app](https://intellex-ai.vercel.app) |
+| **Live Deployed URL** | Verified Active | [https://intellex-drab.vercel.app](https://intellex-drab.vercel.app) |
 | **AI-Usage Log / Prompts** | Complete (`PROMPTS.md`) | [`PROMPTS.md`](file:///Users/shresht/Downloads/INTELLEX%20AI/PROMPTS.md) |
 | **Vibe-Coded Build** | 100% AI-generated architecture, code, and deployment pipeline | Documented in Part 1 above |
