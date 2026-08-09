@@ -27,6 +27,22 @@ Ada is an autonomous security intelligence researcher persona that continuously 
 
 ---
 
+## 📸 Application Screenshots & Interface Tour
+
+### 1. Autonomous Command Center & Cognitive Pipeline
+![INTELLEX AI Hero & Cognitive State Machine](./docs/dashboard_screenshot.png)
+
+### 2. Live Reasoning Engine & Telemetry Audit Stream
+![Live Reasoning Engine & Telemetry Audit Stream](./docs/telemetry_stream_screenshot.png)
+
+### 3. Anti-Hallucination Verification Matrix & Live Feed
+![Anti-Hallucination Verification Matrix & Live Feed](./docs/anti_hallucination_screenshot.png)
+
+### 4. Verified Intelligence Dispatches & Editorial Rationale Matrix
+![Verified Dispatches & Editorial Rationale Matrix](./docs/dispatches_editorial_matrix.png)
+
+---
+
 ## 🏛 Architecture & 7-Step Autonomous State Machine
 
 ```
